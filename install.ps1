@@ -1,29 +1,36 @@
 $ErrorActionPreference = "Stop"
 
-$repoUrl = "https://github.com/d4vidn/win2day-statistics/releases/latest/download/w2ds.exe"
-$targetDir = "C:\Program Files\w2ds"
-$exeName = "w2ds.exe"
+Write-Host "Installing w2ds..." -ForegroundColor Cyan
 
-if (!(Test-Path $targetDir)) { New-Item -ItemType Directory -Path $targetDir | Out-Null }
+$repoUrl = "https://github.com/d4vidn/win2day-statistics/releases/download/v1.0.0/w2ds.exe"
+$targetDir = "$env:LOCALAPPDATA\w2ds"
+$exePath = "$targetDir\w2ds.exe"
 
-try {
-    Invoke-WebRequest -Uri $repoUrl -OutFile "$targetDir\$exeName" -UseBasicParsing
-} catch {
-    Write-Host "Download failed"
-    exit 1
+if (!(Test-Path $targetDir)) {
+    New-Item -ItemType Directory -Path $targetDir | Out-Null
+    Write-Host "Created directory: $targetDir" -ForegroundColor Green
 }
 
-$envPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::Machine)
-if ($envPath -notmatch [Regex]::Escape($targetDir)) {
+try {
+    Write-Host "Downloading w2ds.exe..." -ForegroundColor Yellow
+    Invoke-WebRequest -Uri $repoUrl -OutFile $exePath -UseBasicParsing
+    Write-Host "Downloaded successfully" -ForegroundColor Green
+} catch {
+    Write-Host "ERROR: Download failed - $_" -ForegroundColor Red
+    return
+}
+
+$userPath = [Environment]::GetEnvironmentVariable("Path", [EnvironmentVariableTarget]::User)
+if ($userPath -notlike "*$targetDir*") {
     try {
-        [Environment]::SetEnvironmentVariable("Path", "$envPath;$targetDir", [EnvironmentVariableTarget]::Machine)
+        [Environment]::SetEnvironmentVariable("Path", "$userPath;$targetDir", [EnvironmentVariableTarget]::User)
+        Write-Host "Added to PATH" -ForegroundColor Green
     } catch {
-        Write-Host "Failed to update PATH"
-        exit 1
+        Write-Host "ERROR: Failed to update PATH - $_" -ForegroundColor Red
+        return
     }
 }
 
-Write-Host "Installation successful"
-exit 0
-
-Read-Host "Press Enter to exit"
+Write-Host ""
+Write-Host "Installation successful!" -ForegroundColor Green
+Write-Host "Restart your terminal and run: w2ds --help" -ForegroundColor Cyan
