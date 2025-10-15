@@ -25,3 +25,5 @@ if ($envPath -notmatch [Regex]::Escape($targetDir)) {
 
 Write-Host "Installation successful"
 exit 0
+
+Read-Host "Press Enter to exit"
